@@ -207,7 +207,7 @@ class BaseTestCase(testtools.TestCase,
         at_exit_set.discard(cls)
         if hasattr(super(BaseTestCase, cls), 'tearDownClass'):
             super(BaseTestCase, cls).tearDownClass()
-        cls.tearDownTempestResources()
+		cls.tearDownTempestResources()
 
     def setUp(self):
         super(BaseTestCase, self).setUp()

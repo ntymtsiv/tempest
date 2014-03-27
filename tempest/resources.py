@@ -32,6 +32,8 @@ class Resources():
                 cls.delete_quota_secondary_tear_down(resource_id)
             elif cls.tempest_resources[resource_id] == "subnet":
                 cls.delete_subnet_secondary_tear_down(resource_id)
+            elif cls.tempest_resources[resource_id] == "floating_ip":
+                cls.delete_floating_ip_secondary_tear_down(resource_id)
             elif cls.tempest_resources[resource_id] == "security_group":
                 cls.delete_secgroup_secondary_tear_down(resource_id) 
             elif cls.tempest_resources[resource_id] == "security_group_rule":
@@ -44,7 +46,14 @@ class Resources():
                 pass
 	  	  # else
 	  	  # 	 raise('Resource type not supported')
-	  	     
+    @classmethod   				
+    def delete_network_ports(cls, network_id):	  	     
+    	 client = cls.get_client("network_client")
+    	 _, body = client.show_network(network_id) 
+    	 subnet_ids = body["network"]['subnets']
+    	 for subnet_id in subnet_ids:
+    	 	_, body = client.show_subnet(subnet_id) 
+    	 	print body
 
     @classmethod   				
     def delete_router_secondary_tear_down(cls, router_id):
@@ -54,12 +63,33 @@ class Resources():
 	      	raise AttributeError()	 
 	   except AttributeError:
 	      cls.router_list = []
-	      status_code, body =cls.client.list_routers()
+	      #remove handling when in NetworkClientXML will be method list_routers()
+	      try:
+	          status_code, body =cls.client.list_routers()
+	      except AttributeError:
+	          os = clients.Manager(interface='json')
+	          client = os.network_client
+	          status_code, body = client.list_routers()
 	      cls.router_list = cls.get_list_from_body(body["routers"])
 	      cls.router_list.append(cls)
 	   if router_id in cls.router_list:
-	      remove_router_interfaces(router_id)
+	      cls.remove_router_interfaces(router_id)
 	      client.delete_router(router_id)     
+
+    @classmethod   				
+    def delete_floating_ip_secondary_tear_down(cls, floating_ip_id):
+	   client = cls.get_client("network_client")
+	   try:
+	      if cls not in cls.floating_ip_list:
+	      	raise AttributeError()	 
+	   except AttributeError:
+	      cls.floating_ip_list = []
+	      status_code, body = cls.client.list_floating_ips()
+	      cls.floating_ip_list  = cls.get_list_from_body(body["floatingips"])
+	      cls.floating_ip_list.append(cls)
+	   if floating_ip_id in cls.floating_ip_list:
+	      client.delete_floating_ip(floating_ip_id) 
+
 
     @classmethod   				
     def delete_network_secondary_tear_down(cls, network_id):
@@ -73,6 +103,8 @@ class Resources():
 	      cls.network_list  = cls.get_list_from_body(body["networks"])
 	      cls.network_list.append(cls)
 	   if network_id in cls.network_list:
+	      cls.remove_floating_ips()
+	      cls.delete_network_ports(network_id)
 	      client.delete_network(network_id)     
 
     @classmethod   				
@@ -215,8 +247,21 @@ class Resources():
 	  if client_name == 'network_client':
 	  	return os.network_client
 
-    def remove_router_interfaces(self, router_id):
-		client = get_client("interface")               
+#TODO: add teardown after fail in floating_ip tests
+    @classmethod  
+    def remove_floating_ips(cls):
+		client = cls.get_client("network_client") 
+		status_code, body = client.list_floating_ips()
+		floating_ip_list  = cls.get_list_from_body(body["floatingips"])
+		for floating_ip in floating_ip_list:
+			client.delete_floating_ip(floating_ip)
+			# if floating_ip in cls.tempest_resources:
+			# 	del cls.tempest_resources[floating_ip]
+
+    @classmethod  
+    def remove_router_interfaces(cls, router_id):
+		client = cls.get_client("network_client")         
+		cls.remove_floating_ips()
 		resp, body = client.list_router_interfaces(router_id)
 		interfaces = body['ports']
 		for i in interfaces:

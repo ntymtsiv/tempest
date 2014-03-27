@@ -74,7 +74,7 @@ def add_decorators_safe_setup_to_file(path_to_file):
     for line in fileinput.input(path_to_file, inplace = 1):
         if 'def setUpClass(cls):' in line:
     	    indent = _get_ident(line)
-    	    print indent + '@save_setup\n', line,
+    	    print indent + '@safe_setup\n', line,
         else:
     	    print line,
     fileinput.close()
@@ -90,13 +90,54 @@ def add_import_safe_setup_to_file(path_to_file):
     	    print line,
     fileinput.close()
 
+def edit_test_py():
+	path_to_test_py = 'tempest/test.py'
+	safe_setup_method = ''
+	with io.open('safe_setup_method',"r") as safe_setup:
+		for line in safe_setup:
+			safe_setup_method = safe_setup_method + line
+	finput = fileinput.input(path_to_test_py, inplace = 1)
+	for line in finput:
+		if 'def skip_because(*args, **kwargs):' in line:
+			print safe_setup_method, line,
+		elif 'BaseTestCase' in line:
+			 print line,
+			 end = find_end(finput, ')')
+			 indent = _get_ident(end)
+			 end = end[:-3] + ',\n' +  indent + 'resources.Resources):\n'
+			 print end, 
+		elif 'def tearDownClass' in line:
+			 print line,
+			 end = find_empty_line(finput)
+			 indent = _get_ident(end)
+			 end =  indent + '		cls.tearDownTempestResources()\n'
+			 print end
+		else:
+			print line, 
+
+	fileinput.close()
+
+def find_end(finput, endsymbol):
+	for line in finput:
+		if endsymbol in line:
+			return line
+		else:
+			print line,
+
+def find_empty_line(finput):
+	for line in finput:
+		if line == '\n':
+			return line
+		else:
+			print line,
 
 if __name__ == "__main__": 
+	edit_test_py()
 	resources = {'floating_ip' : 'floatingip',
 				 'bulk_network' : 'networks',
 				 'bulk_subnet' : 'subnets',
 				 'bulk_port' : 'ports'}
-				 
+
 	directory = 'tempest/api/network/'
 	files = os.listdir(directory)
 	files_for_patching = []
