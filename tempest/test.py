@@ -25,6 +25,7 @@ import nose.plugins.attrib
 import testresources
 import testtools
 
+from tempest import resources
 from tempest import clients
 from tempest import config
 from tempest import exceptions
@@ -58,7 +59,24 @@ def attr(*args, **kwargs):
 
     return decorator
 
+def safe_setup(f):
+    """A decorator used to wrap the setUpClass for cleaning up resources
+       when setUpClass failed.
+    """
 
+    def decorator(cls):
+            try:
+                f(cls)
+            except Exception as se:
+                LOG.exception("setUpClass failed: %s" % se)
+                try:
+                    cls.tearDownClass()
+                except Exception as te:
+                    LOG.exception("tearDownClass failed: %s" % te)
+                raise se
+
+    return decorator
+    
 def services(*args, **kwargs):
     """A decorator used to set an attr for each service used in a test case
 
@@ -171,7 +189,8 @@ atexit.register(validate_tearDownClass)
 
 class BaseTestCase(testtools.TestCase,
                    testtools.testcase.WithAttributes,
-                   testresources.ResourcedTestCase):
+                   testresources.ResourcedTestCase,
+                   resources.Resources):
 
     config = config.TempestConfig()
 
@@ -188,6 +207,7 @@ class BaseTestCase(testtools.TestCase,
         at_exit_set.discard(cls)
         if hasattr(super(BaseTestCase, cls), 'tearDownClass'):
             super(BaseTestCase, cls).tearDownClass()
+        cls.tearDownTempestResources()
 
     def setUp(self):
         super(BaseTestCase, self).setUp()

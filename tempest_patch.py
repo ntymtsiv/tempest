@@ -80,10 +80,12 @@ def add_decorators_safe_setup_to_file(path_to_file):
     fileinput.close()
 
 def add_import_safe_setup_to_file(path_to_file):
+    first_time= False
     for line in fileinput.input(path_to_file, inplace = 1):
-        if 'import' in line:
+        if 'import' in line and not first_time:
     	    indent = _get_ident(line)
     	    print indent + 'from tempest.test import safe_setup\n', line,
+    	    first_time = True
         else:
     	    print line,
     fileinput.close()
@@ -94,6 +96,7 @@ if __name__ == "__main__":
 				 'bulk_network' : 'networks',
 				 'bulk_subnet' : 'subnets',
 				 'bulk_port' : 'ports'}
+				 
 	directory = 'tempest/api/network/'
 	files = os.listdir(directory)
 	files_for_patching = []
