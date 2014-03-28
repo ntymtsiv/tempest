@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.test import safe_setup
 from tempest.api.network import base
 from tempest.common.utils.data_utils import rand_name
 from tempest.test import attr
@@ -40,16 +41,20 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(FloatingIPTestJSON, cls).setUpClass()
         cls.ext_net_id = cls.config.network.public_network_id
 
         # Create network, subnet, router and add interface
         cls.network = cls.create_network()
+        cls.set_resource(cls.network["id"], "network")
         cls.subnet = cls.create_subnet(cls.network)
+        cls.set_resource(cls.subnet["id"], "subnet")
         cls.router = cls.create_router(
             rand_name('router-'),
             external_network_id=cls.network_cfg.public_network_id)
+        cls.set_resource(cls.router["id"], "router")
         resp, _ = cls.client.add_router_interface_with_subnet_id(
             cls.router['id'], cls.subnet['id'])
         cls.port = list()
@@ -82,6 +87,7 @@ class FloatingIPTestJSON(base.BaseNetworkTest):
         # Creates a floating IP
         resp, floating_ip = self.client.create_floating_ip(
             self.ext_net_id, port_id=self.port[0]['id'])
+        self.set_resource(floating_ip["floatingip"]["id"], "floating_ip")
         self.assertEqual('201', resp['status'])
         create_floating_ip = floating_ip['floatingip']
         self.assertIsNotNone(create_floating_ip['id'])

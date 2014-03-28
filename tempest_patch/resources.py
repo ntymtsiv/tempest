@@ -16,7 +16,7 @@ class Resources():
         for resource_id in cls.tempest_resources:
             if cls.tempest_resources[resource_id] == "router":
                 cls.delete_router_secondary_tear_down(resource_id)
-            elif cls.tempest_resources[resource_id] == "network":
+            elif cls.tempest_resources[resource_id] == "network" or cls.tempest_resources[resource_id] == "bulk_network":
                 cls.delete_network_secondary_tear_down(resource_id)
             elif cls.tempest_resources[resource_id] == "health_monitor":
                 cls.delete_health_monitor_secondary_tear_down(resource_id)
@@ -38,22 +38,25 @@ class Resources():
                 cls.delete_secgroup_secondary_tear_down(resource_id) 
             elif cls.tempest_resources[resource_id] == "security_group_rule":
                 cls.delete_secgroup_rule_secondary_tear_down(resource_id)
-            elif cls.tempest_resources[resource_id] == "bulk_port":
-                pass
-            elif cls.tempest_resources[resource_id] == "bulk_subnet":
-                pass
-            elif cls.tempest_resources[resource_id] == "bulk_network":
-                pass
+            elif cls.tempest_resources[resource_id] == "port":
+                cls.delete_port_secondary_tear_down(resource_id)
+            # elif cls.tempest_resources[resource_id] == "bulk_port":
+            #     cls.delete_bulk_port_secondary_tear_down(resource_id)
+            # elif cls.tempest_resources[resource_id] == "bulk_subnet":
+            #     cls.delete_bulk_subnet_secondary_tear_down(resource_id)
+            # elif cls.tempest_resources[resource_id] == "bulk_network":
+            #     cls.delete_bulk_network_secondary_tear_down(resource_id)
 	  	  # else
 	  	  # 	 raise('Resource type not supported')
-    @classmethod   				
-    def delete_network_ports(cls, network_id):	  	     
-    	 client = cls.get_client("network_client")
-    	 _, body = client.show_network(network_id) 
-    	 subnet_ids = body["network"]['subnets']
-    	 for subnet_id in subnet_ids:
-    	 	_, body = client.show_subnet(subnet_id) 
-    	 	print body
+	  	  
+    # @classmethod   				
+    # def delete_network_ports(cls, network_id):	  	     
+    # 	 client = cls.get_client("network_client")
+    # 	 _, body = client.show_network(network_id) 
+    # 	 subnet_ids = body["network"]['subnets']
+    # 	 for subnet_id in subnet_ids:
+    # 	 	_, body = client.show_subnet(subnet_id) 
+    # 	 	print body
 
     @classmethod   				
     def delete_router_secondary_tear_down(cls, router_id):
@@ -74,7 +77,21 @@ class Resources():
 	      cls.router_list.append(cls)
 	   if router_id in cls.router_list:
 	      cls.remove_router_interfaces(router_id)
-	      client.delete_router(router_id)     
+	      client.delete_router(router_id)
+
+    @classmethod   				
+    def delete_port_secondary_tear_down(cls, port_id):
+	   client = cls.get_client("network_client")
+	   try:
+	      if cls not in cls.port_list:
+	      	raise AttributeError()	 
+	   except AttributeError:
+	      cls.port_list = []
+	      status_code, body = cls.client.list_ports()
+	      cls.port_list  = cls.get_list_from_body(body["ports"])
+	      cls.port_list.append(cls)
+	   if port_id in cls.port_list:
+	      client.delete_port(port_id) 
 
     @classmethod   				
     def delete_floating_ip_secondary_tear_down(cls, floating_ip_id):
@@ -104,7 +121,7 @@ class Resources():
 	      cls.network_list.append(cls)
 	   if network_id in cls.network_list:
 	      cls.remove_floating_ips()
-	      cls.delete_network_ports(network_id)
+	#      cls.delete_network_ports(network_id)
 	      client.delete_network(network_id)     
 
     @classmethod   				

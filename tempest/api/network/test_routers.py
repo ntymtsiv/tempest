@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.test import safe_setup
 from tempest.api.network import base
 from tempest.common.utils.data_utils import rand_name
 from tempest.test import attr
@@ -24,6 +25,7 @@ class RoutersTest(base.BaseNetworkTest):
     _interface = 'json'
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(RoutersTest, cls).setUpClass()
 
@@ -59,6 +61,7 @@ class RoutersTest(base.BaseNetworkTest):
             name, external_gateway_info={
                 "network_id": self.network_cfg.public_network_id},
             admin_state_up=False)
+        self.set_resource(create_body["router"]["id"], "router")
         self.assertEqual('201', resp['status'])
         self.addCleanup(self._delete_router, create_body['router']['id'])
         self.assertEqual(create_body['router']['name'], name)
@@ -95,8 +98,11 @@ class RoutersTest(base.BaseNetworkTest):
     @attr(type='smoke')
     def test_add_remove_router_interface_with_subnet_id(self):
         network = self.create_network()
+        self.set_resource(network["id"], "network")
         subnet = self.create_subnet(network)
+        self.set_resource(subnet["id"], "subnet")
         router = self.create_router(rand_name('router-'))
+        self.set_resource(router["id"], "router")
         # Add router interface with subnet id
         resp, interface = self.client.add_router_interface_with_subnet_id(
             router['id'], subnet['id'])
@@ -114,9 +120,12 @@ class RoutersTest(base.BaseNetworkTest):
     @attr(type='smoke')
     def test_add_remove_router_interface_with_port_id(self):
         network = self.create_network()
+        self.set_resource(network["id"], "network")
         self.create_subnet(network)
         router = self.create_router(rand_name('router-'))
+        self.set_resource(router["id"], "router")
         resp, port_body = self.client.create_port(network['id'])
+        self.set_resource(port_body["port"]["id"], "port")
         # add router interface to port created above
         resp, interface = self.client.add_router_interface_with_port_id(
             router['id'], port_body['port']['id'])

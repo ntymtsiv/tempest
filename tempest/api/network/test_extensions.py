@@ -16,6 +16,7 @@
 #    under the License.
 
 
+from tempest.test import safe_setup
 from tempest.api.network import base
 from tempest.test import attr
 
@@ -35,6 +36,7 @@ class ExtensionsTestJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(ExtensionsTestJSON, cls).setUpClass()
 

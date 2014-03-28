@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.test import safe_setup
 from tempest.api.network import base
 from tempest.common.utils import data_utils
 from tempest.test import attr
@@ -24,6 +25,7 @@ class SecGroupTest(base.BaseNetworkTest):
     _interface = 'json'
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(SecGroupTest, cls).setUpClass()
 
@@ -69,6 +71,7 @@ class SecGroupTest(base.BaseNetworkTest):
         # Create a security group
         name = data_utils.rand_name('secgroup-')
         resp, group_create_body = self.client.create_security_group(name)
+        self.set_resource(group_create_body["security_group"]["id"], "security_group")
         self.assertEqual('201', resp['status'])
         self.addCleanup(self._delete_security_group,
                         group_create_body['security_group']['id'])
@@ -93,6 +96,7 @@ class SecGroupTest(base.BaseNetworkTest):
         # Create a security group
         name = data_utils.rand_name('secgroup-')
         resp, group_create_body = self.client.create_security_group(name)
+        self.set_resource(group_create_body["security_group"]["id"], "security_group")
         self.assertEqual('201', resp['status'])
         self.addCleanup(self._delete_security_group,
                         group_create_body['security_group']['id'])
@@ -105,6 +109,7 @@ class SecGroupTest(base.BaseNetworkTest):
                 group_create_body['security_group']['id'],
                 protocol=protocol
             )
+            self.set_resource(rule_create_body["security_group_rule"]["id"], "security_group_rule")
             self.assertEqual('201', resp['status'])
             self.addCleanup(self._delete_security_group_rule,
                             rule_create_body['security_group_rule']['id']

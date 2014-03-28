@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.test import safe_setup
 from tempest.api.network import base
 from tempest.common.utils.data_utils import rand_name
 from tempest.test import attr
@@ -40,18 +41,25 @@ class LoadBalancerJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(LoadBalancerJSON, cls).setUpClass()
         cls.network = cls.create_network()
+        cls.set_resource(cls.network["id"], "network")
         cls.name = cls.network['name']
         cls.subnet = cls.create_subnet(cls.network)
+        cls.set_resource(cls.subnet["id"], "subnet")
         pool_name = rand_name('pool-')
         vip_name = rand_name('vip-')
         cls.pool = cls.create_pool(pool_name, "ROUND_ROBIN",
                                    "HTTP", cls.subnet)
+        cls.set_resource(cls.pool["id"], "pool")
         cls.vip = cls.create_vip(vip_name, "HTTP", 80, cls.subnet, cls.pool)
+        cls.set_resource(cls.vip["id"], "vip")
         cls.member = cls.create_member(80, cls.pool)
+        cls.set_resource(cls.member["id"], "member")
         cls.health_monitor = cls.create_health_monitor(4, 3, "TCP", 1)
+        cls.set_resource(cls.health_monitor["id"], "health_monitor")
 
     @attr(type='smoke')
     def test_list_vips(self):
@@ -72,9 +80,11 @@ class LoadBalancerJSON(base.BaseNetworkTest):
         resp, body = self.client.create_pool(rand_name("pool-"),
                                              "ROUND_ROBIN", "HTTP",
                                              self.subnet['id'])
+        self.set_resource(body["pool"]["id"], "pool")
         pool = body['pool']
         resp, body = self.client.create_vip(name, "HTTP", 80,
                                             self.subnet['id'], pool['id'])
+        self.set_resource(body["vip"]["id"], "vip")
         self.assertEqual('201', resp['status'])
         vip = body['vip']
         vip_id = vip['id']
@@ -136,6 +146,7 @@ class LoadBalancerJSON(base.BaseNetworkTest):
         # Creates a member
         resp, body = self.client.create_member("10.0.9.46", 80,
                                                self.pool['id'])
+        self.set_resource(body["member"]["id"], "member")
         self.assertEqual('201', resp['status'])
         member = body['member']
         # Verification of member update
@@ -171,6 +182,7 @@ class LoadBalancerJSON(base.BaseNetworkTest):
     def test_create_update_delete_health_monitor(self):
         # Creates a health_monitor
         resp, body = self.client.create_health_monitor(4, 3, "TCP", 1)
+        self.set_resource(body["health_monitor"]["id"], "health_monitor")
         self.assertEqual('201', resp['status'])
         health_monitor = body['health_monitor']
         # Verification of health_monitor update

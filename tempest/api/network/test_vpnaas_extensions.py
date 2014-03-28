@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.test import safe_setup
 from tempest.api.network import base
 from tempest.common.utils.data_utils import rand_name
 from tempest.test import attr
@@ -35,14 +36,19 @@ class VPNaaSJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(VPNaaSJSON, cls).setUpClass()
         cls.network = cls.create_network()
+        cls.set_resource(cls.network["id"], "network")
         cls.subnet = cls.create_subnet(cls.network)
+        cls.set_resource(cls.subnet["id"], "subnet")
         cls.router = cls.create_router(rand_name("router-"))
+        cls.set_resource(cls.router["id"], "router")
         cls.create_router_interface(cls.router['id'], cls.subnet['id'])
         cls.vpnservice = cls.create_vpnservice(cls.subnet['id'],
                                                cls.router['id'])
+        cls.set_resource(cls.vpnservice["id"], "vpnservice")
 
     @attr(type='smoke')
     def test_list_vpn_services(self):
@@ -60,6 +66,7 @@ class VPNaaSJSON(base.BaseNetworkTest):
                                                     self.router['id'],
                                                     name=name,
                                                     admin_state_up=True)
+        self.set_resource(body["vpn_service"]["id"], "vpn_service")
         self.assertEqual('201', resp['status'])
         vpnservice = body['vpnservice']
         # Assert if created vpnservices are not found in vpnservices list

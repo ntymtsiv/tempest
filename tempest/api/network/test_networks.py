@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.test import safe_setup
 import netaddr
 
 from tempest.api.network import base
@@ -55,19 +56,24 @@ class NetworksTestJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(NetworksTestJSON, cls).setUpClass()
         cls.network = cls.create_network()
+        cls.set_resource(cls.network["id"], "network")
         cls.name = cls.network['name']
         cls.subnet = cls.create_subnet(cls.network)
+        cls.set_resource(cls.subnet["id"], "subnet")
         cls.cidr = cls.subnet['cidr']
         cls.port = cls.create_port(cls.network)
+        cls.set_resource(cls.port["id"], "port")
 
     @attr(type='smoke')
     def test_create_update_delete_network_subnet(self):
         # Creates a network
         name = rand_name('network-')
         resp, body = self.client.create_network(name)
+        self.set_resource(body["network"]["id"], "network")
         self.assertEqual('201', resp['status'])
         network = body['network']
         net_id = network['id']
@@ -84,6 +90,7 @@ class NetworksTestJSON(base.BaseNetworkTest):
             try:
                 resp, body = self.client.create_subnet(net_id,
                                                        str(subnet_cidr))
+                self.set_resource(body["subnet"]["id"], "subnet")
                 break
             except exceptions.BadRequest as e:
                 is_overlapping_cidr = 'overlaps with another subnet' in str(e)
@@ -152,6 +159,7 @@ class NetworksTestJSON(base.BaseNetworkTest):
     def test_create_update_delete_port(self):
         # Verify that successful port creation, update & deletion
         resp, body = self.client.create_port(self.network['id'])
+        self.set_resource(body["port"]["id"], "port")
         self.assertEqual('201', resp['status'])
         port = body['port']
         # Verification of port update
@@ -230,10 +238,13 @@ class BulkNetworkOpsJSON(base.BaseNetworkTest):
     """
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(BulkNetworkOpsJSON, cls).setUpClass()
         cls.network1 = cls.create_network()
+        cls.set_resource(cls.network1["id"], "network")
         cls.network2 = cls.create_network()
+        cls.set_resource(cls.network2["id"], "network")
 
     def _delete_networks(self, created_networks):
         for n in created_networks:
@@ -276,6 +287,8 @@ class BulkNetworkOpsJSON(base.BaseNetworkTest):
         # Creates 2 networks in one request
         network_names = [rand_name('network-'), rand_name('network-')]
         resp, body = self.client.create_bulk_network(2, network_names)
+        for i in body["networks"]:
+            self.set_resource(i["id"], "bulk_network")
         created_networks = body['networks']
         self.assertEqual('201', resp['status'])
         self.addCleanup(self._delete_networks, created_networks)
@@ -314,6 +327,8 @@ class BulkNetworkOpsJSON(base.BaseNetworkTest):
             subnet_list.append(p1)
         del subnet_list[1]['name']
         resp, body = self.client.create_bulk_subnet(subnet_list)
+        for i in body["subnets"]:
+            self.set_resource(i["id"], "bulk_subnet")
         created_subnets = body['subnets']
         self.addCleanup(self._delete_subnets, created_subnets)
         self.assertEqual('201', resp['status'])
@@ -344,6 +359,8 @@ class BulkNetworkOpsJSON(base.BaseNetworkTest):
             port_list.append(p1)
         del port_list[1]['name']
         resp, body = self.client.create_bulk_port(port_list)
+        for i in body["ports"]:
+            self.set_resource(i["id"], "bulk_port")
         created_ports = body['ports']
         self.addCleanup(self._delete_ports, created_ports)
         self.assertEqual('201', resp['status'])

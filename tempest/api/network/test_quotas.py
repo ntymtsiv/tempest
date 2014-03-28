@@ -16,6 +16,7 @@
 #    under the License.
 
 
+from tempest.test import safe_setup
 from tempest.api.network import base
 from tempest import clients
 from tempest.common.utils.data_utils import rand_name
@@ -46,6 +47,7 @@ class QuotasTest(base.BaseNetworkTest):
     """
 
     @classmethod
+    @safe_setup
     def setUpClass(cls):
         super(QuotasTest, cls).setUpClass()
         admin_manager = clients.AdminManager()

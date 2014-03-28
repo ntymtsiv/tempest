@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from tempest.test import safe_setup
 from tempest.api.network import test_security_groups as base
 from tempest import exceptions
 from tempest.test import attr
