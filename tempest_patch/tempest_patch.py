@@ -117,7 +117,7 @@ def edit_test_py():
 			print line,
 			end = find_empty_line(finput)
 			indent = _get_ident(end)
-			end =  indent + '		cls.tearDownTempestResources()\n'
+			end =  indent + '        cls.tearDownTempestResources()\n'
 			print end
 		else:
 			print line, 
