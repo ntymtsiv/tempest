@@ -35,6 +35,7 @@ def _get_resource_name(insert_string):
 				else:
 					resource_name = resource_name + j
 	return resource_name
+
 def _classmethod_or_not(insert_string):
 	if 'cls' in insert_string:
 		return 'cls'
@@ -48,6 +49,7 @@ def _get_ident(insert_string):
 			indent = indent + i
 		else:
 			return indent
+
 def create_string(insert_string):
 	response_body =  ''
 	indent = _get_ident(insert_string)
@@ -101,7 +103,7 @@ def edit_test_py():
 	for line in finput:
 		if 'def skip_because(*args, **kwargs):' in line:
 			print safe_setup_method, line,
-		elif 'BaseTestCase' in line:
+		elif 'class BaseTestCase' in line:
 			print line,
 			end = find_end(finput, ')')
 			indent = _get_ident(end)
