@@ -91,8 +91,9 @@ def add_import_safe_setup_to_file(path_to_file):
     fileinput.close()
 
 def edit_test_py():
-	path_to_test_py = 'tempest/test.py'
+	path_to_test_py = '../tempest/test.py'
 	safe_setup_method = ''
+	first_time= False
 	with io.open('safe_setup_method',"r") as safe_setup:
 		for line in safe_setup:
 			safe_setup_method = safe_setup_method + line
@@ -101,17 +102,21 @@ def edit_test_py():
 		if 'def skip_because(*args, **kwargs):' in line:
 			print safe_setup_method, line,
 		elif 'BaseTestCase' in line:
-			 print line,
-			 end = find_end(finput, ')')
-			 indent = _get_ident(end)
-			 end = end[:-3] + ',\n' +  indent + 'resources.Resources):\n'
-			 print end, 
+			print line,
+			end = find_end(finput, ')')
+			indent = _get_ident(end)
+			end = end[:-3] + ',\n' +  indent + 'resources.Resources):\n'
+			print end, 
+		elif 'import' in line and not first_time:
+			indent = _get_ident(line)
+			print indent + 'from tempest_patch import resources\n', line,
+			first_time = True
 		elif 'def tearDownClass' in line:
-			 print line,
-			 end = find_empty_line(finput)
-			 indent = _get_ident(end)
-			 end =  indent + '		cls.tearDownTempestResources()\n'
-			 print end
+			print line,
+			end = find_empty_line(finput)
+			indent = _get_ident(end)
+			end =  indent + '		cls.tearDownTempestResources()\n'
+			print end
 		else:
 			print line, 
 
@@ -138,7 +143,7 @@ if __name__ == "__main__":
 				 'bulk_subnet' : 'subnets',
 				 'bulk_port' : 'ports'}
 
-	directory = 'tempest/api/network/'
+	directory = '../tempest/api/network/'
 	files = os.listdir(directory)
 	files_for_patching = []
 	for i in files:
@@ -147,7 +152,7 @@ if __name__ == "__main__":
 			files_for_patching.append(i)
 	for file_for_patching in files_for_patching:
 		places_for_insert ={}
-		PATH = 'tempest/api/network/' + file_for_patching
+		PATH = '../tempest/api/network/' + file_for_patching
 		add_import_safe_setup_to_file(PATH)
 		add_decorators_safe_setup_to_file(PATH)
 		with io.open(PATH,"r") as logfile:

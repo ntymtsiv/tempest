@@ -25,7 +25,6 @@ import nose.plugins.attrib
 import testresources
 import testtools
 
-from tempest import resources
 from tempest import clients
 from tempest import config
 from tempest import exceptions
@@ -189,8 +188,7 @@ atexit.register(validate_tearDownClass)
 
 class BaseTestCase(testtools.TestCase,
                    testtools.testcase.WithAttributes,
-                   testresources.ResourcedTestCase,
-                   resources.Resources):
+                   testresources.ResourcedTestCase):
 
     config = config.TempestConfig()
 
@@ -207,7 +205,6 @@ class BaseTestCase(testtools.TestCase,
         at_exit_set.discard(cls)
         if hasattr(super(BaseTestCase, cls), 'tearDownClass'):
             super(BaseTestCase, cls).tearDownClass()
-		cls.tearDownTempestResources()
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
